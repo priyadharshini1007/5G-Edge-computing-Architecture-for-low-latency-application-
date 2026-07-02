@@ -1,0 +1,233 @@
+import random
+import time
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# ==========================
+# CONFIGURATION
+# ==========================
+
+NUM_REQUESTS = 100
+
+cloud_latency_list = []
+mec_latency_list = []
+
+cloud_throughput_list = []
+mec_throughput_list = []
+
+cloud_load_list = []
+mec_load_list = []
+
+selected_server_list = []
+
+# ==========================
+# CLOUD PROCESSING
+# ==========================
+
+def cloud_processing(request_size):
+
+    network_delay = random.uniform(70, 90)
+    processing_delay = random.uniform(30, 50)
+
+    total_latency = network_delay + processing_delay
+
+    throughput = request_size / (total_latency / 1000)
+
+    network_load = request_size
+
+    return total_latency, throughput, network_load
+
+# ==========================
+# MEC PROCESSING
+# ==========================
+
+def mec_processing(request_size):
+
+    network_delay = random.uniform(5, 15)
+    processing_delay = random.uniform(15, 25)
+
+    total_latency = network_delay + processing_delay
+
+    throughput = request_size / (total_latency / 1000)
+
+    network_load = request_size * 0.4
+
+    return total_latency, throughput, network_load
+
+# ==========================
+# AI SERVER SELECTION
+# ==========================
+
+def select_server():
+
+    mec_load_percentage = random.randint(0, 100)
+
+    if mec_load_percentage < 80:
+        return "MEC"
+
+    return "Cloud"
+
+# ==========================
+# SIMULATION
+# ==========================
+
+print("\n===== 5G MEC Simulation Started =====\n")
+
+for request_id in range(1, NUM_REQUESTS + 1):
+
+    request_size = random.randint(100, 1000)
+
+    cloud_latency, cloud_tp, cloud_load = \
+        cloud_processing(request_size)
+
+    mec_latency, mec_tp, mec_load = \
+        mec_processing(request_size)
+
+    selected_server = select_server()
+
+    cloud_latency_list.append(cloud_latency)
+    mec_latency_list.append(mec_latency)
+
+    cloud_throughput_list.append(cloud_tp)
+    mec_throughput_list.append(mec_tp)
+
+    cloud_load_list.append(cloud_load)
+    mec_load_list.append(mec_load)
+
+    selected_server_list.append(selected_server)
+
+    print(
+        f"Request {request_id:03d} | "
+        f"Size={request_size}KB | "
+        f"Selected={selected_server}"
+    )
+
+# ==========================
+# METRICS
+# ==========================
+
+avg_cloud_latency = sum(cloud_latency_list) / len(cloud_latency_list)
+avg_mec_latency = sum(mec_latency_list) / len(mec_latency_list)
+
+avg_cloud_tp = sum(cloud_throughput_list) / len(cloud_throughput_list)
+avg_mec_tp = sum(mec_throughput_list) / len(mec_throughput_list)
+
+avg_cloud_load = sum(cloud_load_list) / len(cloud_load_list)
+avg_mec_load = sum(mec_load_list) / len(mec_load_list)
+
+print("\n===== FINAL RESULTS =====")
+
+print(f"\nAverage Cloud Latency : {avg_cloud_latency:.2f} ms")
+print(f"Average MEC Latency   : {avg_mec_latency:.2f} ms")
+
+print(f"\nAverage Cloud Throughput : {avg_cloud_tp:.2f} KB/s")
+print(f"Average MEC Throughput   : {avg_mec_tp:.2f} KB/s")
+
+print(f"\nAverage Cloud Load : {avg_cloud_load:.2f} KB")
+print(f"Average MEC Load   : {avg_mec_load:.2f} KB")
+
+# ==========================
+# SAVE RESULTS
+# ==========================
+
+data = pd.DataFrame({
+    "Cloud_Latency": cloud_latency_list,
+    "MEC_Latency": mec_latency_list,
+    "Cloud_Throughput": cloud_throughput_list,
+    "MEC_Throughput": mec_throughput_list,
+    "Cloud_Load": cloud_load_list,
+    "MEC_Load": mec_load_list
+})
+
+data.to_csv("mec_results.csv", index=False)
+
+print("\nResults saved as mec_results.csv")
+
+# ==========================
+# GRAPH 1
+# LATENCY
+# ==========================
+
+plt.figure(figsize=(10, 5))
+
+plt.plot(
+    cloud_latency_list,
+    label="Cloud Latency"
+)
+
+plt.plot(
+    mec_latency_list,
+    label="MEC Latency"
+)
+
+plt.title("Cloud vs MEC Latency")
+plt.xlabel("Requests")
+plt.ylabel("Latency (ms)")
+plt.legend()
+plt.grid(True)
+
+plt.savefig("latency_graph.png")
+
+plt.show()
+
+# ==========================
+# GRAPH 2
+# THROUGHPUT
+# ==========================
+
+plt.figure(figsize=(7, 5))
+
+plt.bar(
+    ["Cloud", "MEC"],
+    [avg_cloud_tp, avg_mec_tp]
+)
+
+plt.title("Throughput Comparison")
+plt.ylabel("KB/s")
+
+plt.savefig("throughput_graph.png")
+
+plt.show()
+
+# ==========================
+# GRAPH 3
+# NETWORK LOAD
+# ==========================
+
+plt.figure(figsize=(7, 5))
+
+plt.bar(
+    ["Cloud", "MEC"],
+    [avg_cloud_load, avg_mec_load]
+)
+
+plt.title("Network Load Comparison")
+plt.ylabel("KB")
+
+plt.savefig("network_load_graph.png")
+
+plt.show()
+
+# ==========================
+# GRAPH 4
+# SERVER SELECTION
+# ==========================
+
+mec_count = selected_server_list.count("MEC")
+cloud_count = selected_server_list.count("Cloud")
+
+plt.figure(figsize=(7, 5))
+
+plt.pie(
+    [mec_count, cloud_count],
+    labels=["MEC", "Cloud"],
+    autopct="%1.1f%%"
+)
+
+plt.title("AI Server Selection")
+
+plt.savefig("server_selection.png")
+
+plt.show()
+
+print("\nSimulation Completed Successfully")
